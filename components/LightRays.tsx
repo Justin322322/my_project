@@ -110,22 +110,28 @@ const LightRays: React.FC<LightRaysProps> = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    observerRef.current = new IntersectionObserver(
-      entries => {
-        const entry = entries[0];
-        setIsVisible(entry.isIntersecting);
-      },
-      { threshold: 0.1 }
-    );
+    // Check if IntersectionObserver is supported
+    if ('IntersectionObserver' in window) {
+      observerRef.current = new IntersectionObserver(
+        entries => {
+          const entry = entries[0];
+          setIsVisible(entry.isIntersecting);
+        },
+        { threshold: 0.1 }
+      );
 
-    observerRef.current.observe(containerRef.current);
+      observerRef.current.observe(containerRef.current);
 
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-    };
+      return () => {
+        if (observerRef.current) {
+          observerRef.current.disconnect();
+          observerRef.current = null;
+        }
+      };
+    } else {
+      // Fallback for browsers without IntersectionObserver support
+      setIsVisible(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -143,8 +149,12 @@ const LightRays: React.FC<LightRaysProps> = ({
 
       if (!containerRef.current) return;
 
+      // Use lower DPR on mobile devices for better performance
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const devicePixelRatio = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2);
+      
       const renderer = new Renderer({
-        dpr: Math.min(window.devicePixelRatio, 2),
+        dpr: devicePixelRatio,
         alpha: true
       });
       rendererRef.current = renderer;
@@ -293,7 +303,9 @@ void main() {
       const updatePlacement = () => {
         if (!containerRef.current || !renderer) return;
 
-        renderer.dpr = Math.min(window.devicePixelRatio, 2);
+        // Keep consistent DPR for performance
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        renderer.dpr = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2);
 
         const { clientWidth: wCSS, clientHeight: hCSS } = containerRef.current;
         renderer.setSize(wCSS, hCSS);
@@ -437,9 +449,23 @@ void main() {
       mouseRef.current = { x, y };
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!containerRef.current || !rendererRef.current) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = (touch.clientX - rect.left) / rect.width;
+      const y = (touch.clientY - rect.top) / rect.height;
+      mouseRef.current = { x, y };
+    };
+
     if (followMouse) {
       window.addEventListener('mousemove', handleMouseMove);
-      return () => window.removeEventListener('mousemove', handleMouseMove);
+      window.addEventListener('touchmove', handleTouchMove, { passive: true });
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('touchmove', handleTouchMove);
+      };
     }
   }, [followMouse]);
 

@@ -2,6 +2,23 @@
 
 A modern, responsive appointment booking landing page built with Next.js 16, React 19, TypeScript, and Tailwind CSS with shadcn/ui components.
 
+## 🚀 Quick Start
+
+1. **Install dependencies** (if not already done):
+   ```bash
+   npm install
+   ```
+
+2. **Start the development server**:
+   ```bash
+   npm run dev
+   ```
+
+3. **Open your browser**:
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+That's it! Your appointment booking landing page is now running.
+
 ## 🚀 Features
 
 - **Modern Design**: Clean, professional landing page with smooth animations
@@ -60,46 +77,26 @@ A modern, responsive appointment booking landing page built with Next.js 16, Rea
 - **Icons**: Lucide React
 - **Theme**: Custom theme from tweakcn.com
 
-## 📦 Installation
+## 📦 Project Structure
 
-1. Navigate to the client directory:
-   ```bash
-   cd client
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+```
+client/
+├── app/
+│   ├── api/book-appointment/    # API endpoint
+│   ├── page.tsx                 # Main landing page
+│   └── globals.css              # Styles with theme
+├── components/ui/               # Reusable components
+└── lib/utils.ts                 # Utilities
+```
 
 ## 🔧 Configuration
 
-### Google Calendar Integration
-
-See `GOOGLE_CALENDAR_SETUP.md` for detailed instructions on:
-- Setting up Google Cloud Project
-- Creating OAuth 2.0 credentials
-- Getting refresh tokens
-- Implementing the API integration
-
-### Environment Variables
-
-1. Copy `.env.example` to `.env.local`:
-   ```bash
-   cp .env.example .env.local
-   ```
-
-2. Fill in your credentials:
-   - Google Calendar API credentials
-   - Email service API keys (optional)
-   - Application configuration
+All setup and configuration instructions are in [SETUP.md](./SETUP.md), including:
+- Google Cloud Console setup
+- OAuth 2.0 credentials
+- Environment variables configuration
+- Vercel deployment
+- Troubleshooting
 
 ## 📝 Customization
 
@@ -141,8 +138,7 @@ vercel
 
 ## 📚 Documentation
 
-- [QUICKSTART.md](./QUICKSTART.md) - Quick start guide
-- [GOOGLE_CALENDAR_SETUP.md](./GOOGLE_CALENDAR_SETUP.md) - Google Calendar API setup
+- [SETUP.md](./SETUP.md) - Complete setup and configuration guide
 - [Next.js Documentation](https://nextjs.org/docs)
 - [shadcn/ui Documentation](https://ui.shadcn.com/)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
