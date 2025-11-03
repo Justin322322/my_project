@@ -179,7 +179,7 @@ export default function Home() {
               <div className="h-1 w-24 bg-[#8b5cf6] mb-5 mx-auto md:mx-0" />
               <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3">Fast, Easy Booking</h3>
               <p className="text-sm sm:text-base md:text-lg text-white/80 mb-7 max-w-prose mx-auto md:mx-0">
-                Pick a date and time that works for you — we'll automatically add it
+                Pick a date and time that works for you — we&apos;ll automatically add it
                 to your calendar.
               </p>
               <div>
@@ -201,7 +201,7 @@ export default function Home() {
       <section className="px-6 md:px-8 py-20 bg-neutral-900 dark:bg-black">
         <div className="container mx-auto max-w-7xl">
           <InView className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-[#8b5cf6]">
               Fast, Easy, and Hassle-Free Scheduling
             </h2>
             <p className="text-lg text-neutral-300 max-w-2xl mx-auto">
@@ -219,11 +219,11 @@ export default function Home() {
         <div className="container mx-auto max-w-3xl">
           <div className="">
             <InView className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-[#8b5cf6]">
                 Book Your Appointment
               </h2>
               <p className="text-lg text-white/80">
-                Fill out the form below and we'll confirm your appointment
+                Fill out the form below and we&apos;ll confirm your appointment
               </p>
             </InView>
 

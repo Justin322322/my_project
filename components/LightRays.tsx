@@ -130,7 +130,8 @@ const LightRays: React.FC<LightRaysProps> = ({
       };
     } else {
       // Fallback for browsers without IntersectionObserver support
-      setIsVisible(true);
+      // Defer state update to avoid synchronous setState within effect
+      setTimeout(() => setIsVisible(true), 0);
     }
   }, []);
 

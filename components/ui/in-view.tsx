@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ElementType } from "react";
+import { useEffect, useRef, useState, type ElementType, type Ref } from "react";
 import { cn } from "@/lib/utils";
 
 interface InViewProps {
@@ -90,7 +90,7 @@ export function InView({
 
   return (
     <Component
-      ref={ref as any}
+      ref={ref as unknown as Ref<HTMLElement>}
       className={cn(
         // Always include transition utilities for smoothness
         "transition-all duration-700 ease-out will-change-transform will-change-opacity",
