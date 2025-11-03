@@ -22,6 +22,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -36,6 +37,8 @@ import {
   CalendarIcon,
   CheckCircle2,
   ArrowUp,
+  AlertCircle,
+  X,
 } from "lucide-react";
 
 // Generate time slots from 9 AM to 5:30 PM
@@ -56,24 +59,67 @@ const generateTimeSlots = () => {
 const timeSlots = generateTimeSlots();
 
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
+  name: z
+    .string()
+    .trim()
+    .min(2, {
+      message: "Name must be at least 2 characters.",
+    })
+    .max(100, {
+      message: "Name must be less than 100 characters.",
+    })
+    .regex(/^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/, {
+      message: "Full name can only include letters, spaces, hyphens, and apostrophes.",
+    })
+    .refine((val) => val.length >= 2, {
+      message: "Name cannot be empty after removing spaces.",
+    }),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email({
+      message: "Please enter a valid email address.",
+    })
+    .max(255, {
+      message: "Email must be less than 255 characters.",
+    }),
   date: z.date({
     message: "Please select a date.",
   }),
   time: z.string().min(1, {
     message: "Please select a time.",
   }),
-  message: z.string().optional(),
-});
+  message: z
+    .string()
+    .max(1000, {
+      message: "Message must be less than 1000 characters.",
+    })
+    .optional(),
+}).refine(
+  (data) => {
+    // Validate that date + time combination isn't in the past
+    if (!data.date || !data.time) {
+      return true; // Let individual field validations handle missing values
+    }
+
+    const [hours, minutes] = data.time.split(":").map(Number);
+    const selectedDateTime = new Date(data.date);
+    selectedDateTime.setHours(hours, minutes, 0, 0);
+
+    const now = new Date();
+    return selectedDateTime >= now;
+  },
+  {
+    message: "The selected date and time must be in the future.",
+    path: ["time"], // Show error on time field
+  }
+);
 
 export default function Home() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -109,10 +155,13 @@ export default function Home() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Format the date to YYYY-MM-DD for the API
+      // Trim and format values before submission
       const formattedValues = {
         ...values,
+        name: values.name.trim(),
+        email: values.email.trim().toLowerCase(),
         date: format(values.date, "yyyy-MM-dd"),
+        message: values.message?.trim() || undefined,
       };
 
       const response = await fetch("/api/book-appointment", {
@@ -127,17 +176,36 @@ export default function Home() {
 
       if (response.ok) {
         setIsSubmitted(true);
+        setSubmitError(null);
         form.reset();
         // Reset success message after 5 seconds
         setTimeout(() => {
           setIsSubmitted(false);
         }, 5000);
       } else {
-        alert(data.error || "Failed to book appointment");
+        const errorMessage = data.error || "Failed to book appointment. Please try again.";
+        setSubmitError(errorMessage);
+        // Scroll to error and focus on first error field
+        document.getElementById("booking-form")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        setTimeout(() => {
+          const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
+          firstErrorField?.focus();
+        }, 300);
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Failed to book appointment. Please try again.");
+      const errorMessage = error instanceof Error 
+        ? `Network error: ${error.message}. Please check your connection and try again.`
+        : "Failed to book appointment. Please try again.";
+      setSubmitError(errorMessage);
+      // Scroll to form
+      document.getElementById("booking-form")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }
   };
 
@@ -227,6 +295,29 @@ export default function Home() {
               </p>
             </InView>
 
+            {submitError && (
+              <div
+                className="mb-8 bg-destructive/10 border-2 border-destructive/50 rounded-lg p-4 flex items-start gap-3"
+                role="alert"
+                aria-live="assertive"
+              >
+                <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-destructive mb-1">
+                    Error submitting appointment
+                  </p>
+                  <p className="text-sm text-destructive/90">{submitError}</p>
+                </div>
+                <button
+                  onClick={() => setSubmitError(null)}
+                  className="text-destructive hover:text-destructive/80 shrink-0"
+                  aria-label="Dismiss error"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
             {isSubmitted ? (
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-2 border-green-200 dark:border-green-800 rounded-2xl p-16 text-center">
                 <div className="flex justify-center mb-6">
@@ -244,7 +335,24 @@ export default function Home() {
               </div>
             ) : (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
+                <form 
+                  onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                    // Focus on first error field when validation fails
+                    const firstErrorField = Object.keys(errors)[0];
+                    if (firstErrorField) {
+                      setTimeout(() => {
+                        const errorElement = document.querySelector(
+                          `[name="${firstErrorField}"]`
+                        ) as HTMLElement;
+                        if (errorElement) {
+                          errorElement.focus();
+                          errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }
+                      }, 100);
+                    }
+                  })} 
+                  className="space-y-12"
+                >
                   {/* Contact Information */}
                   <div className="space-y-8">
                     <div>
@@ -262,15 +370,31 @@ export default function Home() {
                           <InView>
                             <FormItem>
                               <FormLabel className="text-lg font-medium">
-                                Full Name
+                                Full Name <span aria-hidden="true" className="text-destructive">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   placeholder="Enter your full name"
+                                  autoComplete="name"
+                                  aria-required="true"
+                                  maxLength={100}
                                   className="h-14 text-base border-2 focus-visible:ring-2"
                                   {...field}
+                                  onChange={(e) => {
+                                    const sanitized = e.target.value
+                                      .replace(/[0-9]/g, "")
+                                      .slice(0, 100);
+                                    field.onChange({
+                                      ...e,
+                                      target: { ...e.target, value: sanitized },
+                                    });
+                                    setSubmitError(null);
+                                  }}
                                 />
                               </FormControl>
+                              <FormDescription className="text-sm text-muted-foreground">
+                                Enter your first and last name
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           </InView>
@@ -284,16 +408,32 @@ export default function Home() {
                           <InView delayMs={100}>
                             <FormItem>
                               <FormLabel className="text-lg font-medium">
-                                Email Address
+                                Email Address <span aria-hidden="true" className="text-destructive">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   placeholder="your.email@example.com"
                                   type="email"
+                                  autoComplete="email"
+                                  aria-required="true"
+                                  maxLength={255}
                                   className="h-14 text-base border-2 focus-visible:ring-2"
                                   {...field}
+                                  onChange={(e) => {
+                                    const sanitized = e.target.value
+                                      .replace(/\s+/g, "")
+                                      .slice(0, 255);
+                                    field.onChange({
+                                      ...e,
+                                      target: { ...e.target, value: sanitized },
+                                    });
+                                    setSubmitError(null);
+                                  }}
                                 />
                               </FormControl>
+                              <FormDescription className="text-sm text-muted-foreground">
+                                We&apos;ll send confirmation details to this email
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           </InView>
@@ -319,7 +459,7 @@ export default function Home() {
                           <InView>
                             <FormItem>
                               <FormLabel className="text-lg font-medium">
-                                Date
+                                Date <span aria-hidden="true" className="text-destructive">*</span>
                               </FormLabel>
                               <Popover>
                                 <PopoverTrigger asChild>
@@ -330,6 +470,8 @@ export default function Home() {
                                         "w-full h-14 text-base pl-4 text-left font-normal justify-start border-2 hover:bg-accent/50",
                                         !field.value && "text-muted-foreground"
                                       )}
+                                      aria-label="Pick appointment date"
+                                      aria-required="true"
                                     >
                                       {field.value ? (
                                         format(field.value, "PPP")
@@ -344,7 +486,25 @@ export default function Home() {
                                   <CalendarComponent
                                     mode="single"
                                     selected={field.value}
-                                    onSelect={field.onChange}
+                                    onSelect={(date) => {
+                                      field.onChange(date);
+                                      setSubmitError(null);
+                                      
+                                      // If date changes, check if current time is still valid
+                                      const currentTime = form.getValues("time");
+                                      if (date && currentTime) {
+                                        const [hours, minutes] = currentTime.split(":").map(Number);
+                                        const selectedDateTime = new Date(date);
+                                        selectedDateTime.setHours(hours, minutes, 0, 0);
+                                        const now = new Date();
+                                        
+                                        // If the date+time combination is now in the past, clear the time
+                                        if (selectedDateTime < now) {
+                                          form.setValue("time", "");
+                                          form.clearErrors("time");
+                                        }
+                                      }
+                                    }}
                                     disabled={(date) =>
                                       date < new Date(new Date().setHours(0, 0, 0, 0))
                                     }
@@ -360,30 +520,64 @@ export default function Home() {
                       <FormField
                         control={form.control}
                         name="time"
-                        render={({ field }) => (
-                          <InView delayMs={100}>
-                            <FormItem>
-                              <FormLabel className="text-lg font-medium">
-                                Time
-                              </FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger className="w-full !h-14 text-base border-2">
-                                    <SelectValue placeholder="Select a time" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {timeSlots.map((slot) => (
-                                    <SelectItem key={slot.value} value={slot.value}>
-                                      {slot.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          </InView>
-                        )}
+                        render={({ field }) => {
+                          const selectedDate = form.watch("date");
+                          const now = new Date();
+                          const isToday = selectedDate && 
+                            selectedDate.toDateString() === now.toDateString();
+                          
+                          // Filter time slots based on selected date
+                          const availableTimeSlots = isToday
+                            ? timeSlots.filter((slot) => {
+                                const [hours, minutes] = slot.value.split(":").map(Number);
+                                const slotDateTime = new Date(selectedDate);
+                                slotDateTime.setHours(hours, minutes, 0, 0);
+                                return slotDateTime > now;
+                              })
+                            : timeSlots;
+                          
+                          return (
+                            <InView delayMs={100}>
+                              <FormItem>
+                                <FormLabel className="text-lg font-medium">
+                                  Time <span aria-hidden="true" className="text-destructive">*</span>
+                                </FormLabel>
+                                <Select 
+                                  onValueChange={(value) => {
+                                    field.onChange(value);
+                                    setSubmitError(null);
+                                  }} 
+                                  defaultValue={field.value}
+                                  disabled={!selectedDate}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger 
+                                      className="w-full !h-14 text-base border-2" 
+                                      aria-required="true"
+                                      aria-disabled={!selectedDate}
+                                    >
+                                      <SelectValue placeholder={selectedDate ? "Select a time" : "Select a date first"} />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {availableTimeSlots.length > 0 ? (
+                                      availableTimeSlots.map((slot) => (
+                                        <SelectItem key={slot.value} value={slot.value}>
+                                          {slot.label}
+                                        </SelectItem>
+                                      ))
+                                    ) : (
+                                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                                        No available times for today
+                                      </div>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            </InView>
+                          );
+                        }}
                       />
                     </div>
                   </div>
@@ -400,24 +594,47 @@ export default function Home() {
                     <FormField
                       control={form.control}
                       name="message"
-                      render={({ field }) => (
-                        <InView>
-                          <FormItem>
-                            <FormLabel className="text-lg font-medium">
-                              Message
-                            </FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Tell us anything that will help us prepare for your appointment..."
-                                rows={6}
-                                className="text-base resize-none border-2 focus-visible:ring-2"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        </InView>
-                      )}
+                      render={({ field }) => {
+                        const currentLength = field.value?.length || 0;
+                        const maxLength = 1000;
+                        const isNearLimit = currentLength > maxLength * 0.9;
+                        
+                        return (
+                          <InView>
+                            <FormItem>
+                              <FormLabel className="text-lg font-medium">
+                                Message
+                              </FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Tell us anything that will help us prepare for your appointment..."
+                                  rows={6}
+                                  maxLength={maxLength}
+                                  className="text-base resize-none border-2 focus-visible:ring-2"
+                                  {...field}
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    setSubmitError(null);
+                                  }}
+                                />
+                              </FormControl>
+                              <div className="flex justify-between items-center">
+                                <FormMessage />
+                                <span
+                                  className={`text-xs ${
+                                    isNearLimit
+                                      ? "text-destructive"
+                                      : "text-muted-foreground"
+                                  }`}
+                                  aria-live="polite"
+                                >
+                                  {currentLength} / {maxLength}
+                                </span>
+                              </div>
+                            </FormItem>
+                          </InView>
+                        );
+                      }}
                     />
                   </div>
 
