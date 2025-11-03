@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ElementType } from "react";
 import { cn } from "@/lib/utils";
 
 interface InViewProps {
@@ -32,7 +32,7 @@ interface InViewProps {
    * the viewport and will keep the in-view state afterwards.
    */
   once?: boolean;
-  as?: keyof JSX.IntrinsicElements;
+  as?: ElementType;
 }
 
 export function InView({
@@ -86,7 +86,7 @@ export function InView({
     };
   }, [threshold, rootMargin, delayMs, once]);
 
-  const Component = as as any;
+  const Component = (as as ElementType) || "div";
 
   return (
     <Component
