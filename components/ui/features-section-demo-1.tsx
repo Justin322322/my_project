@@ -11,9 +11,10 @@ interface FeaturesSectionDemoProps {
   cards?: FeatureCard[];
   isEditable?: boolean;
   onEdit?: (field: string, value: string) => void;
+  primaryColor?: string;
 }
 
-export default function FeaturesSectionDemo({ cards = grid, isEditable, onEdit }: FeaturesSectionDemoProps) {
+export default function FeaturesSectionDemo({ cards = grid, isEditable, onEdit, primaryColor = "#8b5cf6" }: FeaturesSectionDemoProps) {
   return (
     <div className="py-0">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 w-full">
@@ -37,7 +38,7 @@ export default function FeaturesSectionDemo({ cards = grid, isEditable, onEdit }
                   <path d="M19 1v18H1" stroke="white" strokeWidth="2" />
                 </svg>
               </div>
-              <Grid size={20} />
+              <Grid size={20} primaryColor={primaryColor} />
               <p 
                 className={`text-xl md:text-2xl font-bold text-neutral-800 dark:text-white relative z-20 mb-4 transition-colors duration-300 group-hover:text-primary ${isEditable ? 'cursor-text hover:ring-2 hover:ring-primary hover:ring-offset-2 hover:ring-offset-neutral-900 p-1' : ''}`}
                 contentEditable={isEditable}
@@ -67,11 +68,16 @@ export default function FeaturesSectionDemo({ cards = grid, isEditable, onEdit }
               <div className="pointer-events-none absolute bottom-0 right-0">
                 {/* Base grayscale glow */}
                 <div className="absolute bottom-0 right-0 translate-y-[55%] h-56 w-56 sm:h-64 sm:w-64 rounded-full bg-gradient-to-t from-white/10 via-white/5 to-transparent blur-3xl opacity-70" />
-                {/* Purple glow only on hover */}
-                <div className="absolute bottom-0 right-0 translate-y-[55%] h-56 w-56 sm:h-64 sm:w-64 rounded-full bg-gradient-to-t from-purple-700/50 via-purple-500/30 to-transparent blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-60" />
+                {/* Color glow only on hover - uses theme color */}
+                <div 
+                  className="absolute bottom-0 right-0 translate-y-[55%] h-56 w-56 sm:h-64 sm:w-64 rounded-full bg-gradient-to-t to-transparent blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-60"
+                  style={{
+                    backgroundImage: `linear-gradient(to top, ${primaryColor}80, ${primaryColor}4d, transparent)`
+                  }}
+                />
                 {/* Icon positioned so only quarter is visible in lower-right */}
                 <div className="absolute bottom-0 right-0 translate-y-1/2">
-                  {getIconForFeature(feature.title, index)}
+                  {getIconForFeature(feature.title, index, primaryColor)}
                 </div>
               </div>
             </div>
@@ -128,9 +134,11 @@ const grid = [
 export const Grid = ({
   pattern,
   size,
+  primaryColor = "#8b5cf6",
 }: {
   pattern?: number[][];
   size?: number;
+  primaryColor?: string;
 }) => {
   const p = pattern ?? [
     [7, 1],
@@ -139,16 +147,31 @@ export const Grid = ({
     [10, 4],
     [11, 5],
   ];
+  
+  // Convert hex to rgba
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+  
   return (
     <div className="pointer-events-none absolute left-1/2 top-0  -ml-20 -mt-2 h-full w-full [mask-image:linear-gradient(white,transparent)]">
-      <div className="absolute inset-0 bg-gradient-to-r  [mask-image:radial-gradient(farthest-side_at_top,white,transparent)] dark:from-purple-900/30 from-purple-100/30 to-purple-300/30 dark:to-purple-900/30 opacity-100">
+      <div 
+        className="absolute inset-0 bg-gradient-to-r [mask-image:radial-gradient(farthest-side_at_top,white,transparent)] opacity-100"
+        style={{
+          backgroundImage: `linear-gradient(to right, ${hexToRgba(primaryColor, 0.3)}, ${hexToRgba(primaryColor, 0.3)})`
+        }}
+      >
         <GridPattern
           width={size ?? 20}
           height={size ?? 20}
           x="-12"
           y="4"
           squares={p}
-          className="absolute inset-0 h-full w-full  mix-blend-overlay dark:fill-purple-400/10 dark:stroke-purple-400/10 stroke-purple-600/10 fill-purple-600/10"
+          className="absolute inset-0 h-full w-full mix-blend-overlay"
+          primaryColor={primaryColor}
         />
       </div>
     </div>
@@ -161,10 +184,19 @@ interface GridPatternProps extends SVGProps<SVGSVGElement> {
   x: string;
   y: string;
   squares?: number[][];
+  primaryColor?: string;
 }
 
-export function GridPattern({ width, height, x, y, squares, ...props }: GridPatternProps) {
+export function GridPattern({ width, height, x, y, squares, primaryColor = "#8b5cf6", ...props }: GridPatternProps) {
   const patternId = useId();
+  
+  // Convert hex to rgba
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
 
   return (
     <svg aria-hidden="true" {...props}>
@@ -177,7 +209,11 @@ export function GridPattern({ width, height, x, y, squares, ...props }: GridPatt
           x={x}
           y={y}
         >
-          <path d={`M.5 ${height}V.5H${width}`} fill="none" />
+          <path 
+            d={`M.5 ${height}V.5H${width}`} 
+            fill="none"
+            stroke={hexToRgba(primaryColor, 0.1)}
+          />
         </pattern>
       </defs>
       <rect
@@ -196,6 +232,7 @@ export function GridPattern({ width, height, x, y, squares, ...props }: GridPatt
               height={height + 1}
               x={squareX * width}
               y={squareY * height}
+              fill={hexToRgba(primaryColor, 0.1)}
             />
           ))}
         </svg>
@@ -204,47 +241,105 @@ export function GridPattern({ width, height, x, y, squares, ...props }: GridPatt
   );
 }
 
-function getIconByIndex(index: number) {
-  const commonClass = "text-white/20 transition-all duration-300 group-hover:text-purple-400/85 group-hover:drop-shadow-[0_0_28px_rgba(168,85,247,0.35)]";
-  const big = 200; // px size for large icon (smaller, clearer)
+function getIconByIndex(index: number, primaryColor: string) {
+  const big = 200;
+  
+  // Convert hex to rgba for the glow effect
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+  
+  const hoverColor = `${primaryColor}d9`; // 85% opacity
+  const hoverGlow = hexToRgba(primaryColor, 0.35);
+  
+  const iconStyle = {
+    color: 'rgba(255, 255, 255, 0.2)',
+    transition: 'all 0.3s',
+  };
+  
+  const IconWrapper = ({ children }: { children: React.ReactNode }) => (
+    <div 
+      className="transition-all duration-300"
+      style={iconStyle}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = hoverColor;
+        e.currentTarget.style.filter = `drop-shadow(0 0 28px ${hoverGlow})`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = iconStyle.color;
+        e.currentTarget.style.filter = 'none';
+      }}
+    >
+      {children}
+    </div>
+  );
+  
   switch (index % 8) {
     case 0:
-      return <FaCalendarAlt size={big} className={commonClass} />;
+      return <IconWrapper><FaCalendarAlt size={big} /></IconWrapper>;
     case 1:
-      return <FaCalendarCheck size={big} className={commonClass} />;
+      return <IconWrapper><FaCalendarCheck size={big} /></IconWrapper>;
     case 2:
-      return <FaBell size={big} className={commonClass} />;
+      return <IconWrapper><FaBell size={big} /></IconWrapper>;
     case 3:
-      return <FaClock size={big} className={commonClass} />;
+      return <IconWrapper><FaClock size={big} /></IconWrapper>;
     case 4:
-      return <FaSyncAlt size={big} className={commonClass} />;
+      return <IconWrapper><FaSyncAlt size={big} /></IconWrapper>;
     case 5:
-      return <FaMobileAlt size={big} className={commonClass} />;
+      return <IconWrapper><FaMobileAlt size={big} /></IconWrapper>;
     case 6:
-      return <FaShieldAlt size={big} className={commonClass} />;
+      return <IconWrapper><FaShieldAlt size={big} /></IconWrapper>;
     default:
-      return <FaRegClock size={big} className={commonClass} />;
+      return <IconWrapper><FaRegClock size={big} /></IconWrapper>;
   }
 }
 
-function getIconForFeature(title: string, index: number) {
+function getIconForFeature(title: string, index: number, primaryColor: string) {
   const normalized = title.toLowerCase();
-  const commonClass = "text-white/20 transition-all duration-300 group-hover:text-purple-400/85 group-hover:drop-shadow-[0_0_28px_rgba(168,85,247,0.35)]";
   const big = 200;
 
+  // Convert hex to rgba for the glow effect
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+  
+  const iconStyle = {
+    color: 'rgba(255, 255, 255, 0.2)',
+  };
+  
+  const IconWrapper = ({ children }: { children: React.ReactNode }) => (
+    <div 
+      className="transition-all duration-300 group-hover:[&>*]:!text-[var(--icon-hover-color)] group-hover:[&>*]:drop-shadow-[0_0_28px_var(--icon-glow)]"
+      style={{
+        '--icon-hover-color': `${primaryColor}d9`,
+        '--icon-glow': hexToRgba(primaryColor, 0.35),
+      } as React.CSSProperties}
+    >
+      <div style={iconStyle}>
+        {children}
+      </div>
+    </div>
+  );
+
   if (normalized.includes("instant confirmation")) {
-    return <FaBolt size={big} className={commonClass} />;
+    return <IconWrapper><FaBolt size={big} /></IconWrapper>;
   }
   if (normalized.includes("automatic reminders")) {
-    return <FaCalendarDay size={big} className={commonClass} />;
+    return <IconWrapper><FaCalendarDay size={big} /></IconWrapper>;
   }
   if (normalized.includes("flexible time slots")) {
-    return <FaArrowsAltH size={big} className={commonClass} />;
+    return <IconWrapper><FaArrowsAltH size={big} /></IconWrapper>;
   }
   if (normalized.includes("24/7 availability")) {
-    return <FaRegClock size={big} className={commonClass} />;
+    return <IconWrapper><FaRegClock size={big} /></IconWrapper>;
   }
 
   // fallback to index-based icon for others
-  return getIconByIndex(index);
+  return getIconByIndex(index, primaryColor);
 }

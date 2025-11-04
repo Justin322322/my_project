@@ -45,6 +45,7 @@ export function FeaturesSection({ content, isEditable, onEdit }: FeaturesSection
           cards={content.features.cards}
           isEditable={isEditable}
           onEdit={onEdit}
+          primaryColor={content.theme.primaryColor}
         />
       </div>
     </section>
