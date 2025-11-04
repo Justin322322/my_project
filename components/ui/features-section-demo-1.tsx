@@ -1,4 +1,4 @@
-import { useId, type SVGProps } from "react";
+import React, { useId, type SVGProps } from "react";
 import { FaCalendarAlt, FaCalendarCheck, FaBell, FaClock, FaSyncAlt, FaMobileAlt, FaShieldAlt, FaRegClock, FaBolt, FaArrowsAltH, FaCalendarDay } from "react-icons/fa";
 import InView from "@/components/ui/in-view";
 
@@ -309,23 +309,53 @@ function getIconForFeature(title: string, index: number, primaryColor: string) {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
   
+  const hoverColor = `${primaryColor}d9`; // 85% opacity
+  const hoverGlow = hexToRgba(primaryColor, 0.35);
+  
   const iconStyle = {
     color: 'rgba(255, 255, 255, 0.2)',
+    transition: 'all 0.3s',
   };
   
-  const IconWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div 
-      className="transition-all duration-300 group-hover:[&>*]:!text-[var(--icon-hover-color)] group-hover:[&>*]:drop-shadow-[0_0_28px_var(--icon-glow)]"
-      style={{
-        '--icon-hover-color': `${primaryColor}d9`,
-        '--icon-glow': hexToRgba(primaryColor, 0.35),
-      } as React.CSSProperties}
-    >
-      <div style={iconStyle}>
+  const IconWrapper = ({ children }: { children: React.ReactNode }) => {
+    const divRef = React.useRef<HTMLDivElement>(null);
+    
+    React.useEffect(() => {
+      const div = divRef.current;
+      if (!div) return;
+      
+      const parent = div.closest('.group');
+      if (!parent) return;
+      
+      const handleMouseEnter = () => {
+        div.style.color = hoverColor;
+        div.style.filter = `drop-shadow(0 0 28px ${hoverGlow})`;
+      };
+      
+      const handleMouseLeave = () => {
+        div.style.color = iconStyle.color;
+        div.style.filter = 'none';
+      };
+      
+      parent.addEventListener('mouseenter', handleMouseEnter);
+      parent.addEventListener('mouseleave', handleMouseLeave);
+      
+      return () => {
+        parent.removeEventListener('mouseenter', handleMouseEnter);
+        parent.removeEventListener('mouseleave', handleMouseLeave);
+      };
+    }, []);
+    
+    return (
+      <div 
+        ref={divRef}
+        className="transition-all duration-300"
+        style={iconStyle}
+      >
         {children}
       </div>
-    </div>
-  );
+    );
+  };
 
   if (normalized.includes("instant confirmation")) {
     return <IconWrapper><FaBolt size={big} /></IconWrapper>;
