@@ -76,8 +76,16 @@ export default function FeaturesSectionDemo({ cards = grid, isEditable, onEdit, 
                   }}
                 />
                 {/* Icon positioned so only quarter is visible in lower-right */}
-                <div className="absolute bottom-0 right-0 translate-y-1/2">
-                  {getIconForFeature(feature.title, index, primaryColor)}
+                <div 
+                  className="absolute bottom-0 right-0 translate-y-1/2 transition-all duration-300 [color:rgba(255,255,255,0.2)]"
+                  style={{
+                    '--hover-color': `${primaryColor}d9`,
+                    '--hover-glow': `drop-shadow(0 0 28px ${primaryColor}59)`,
+                  } as React.CSSProperties}
+                >
+                  <div className="group-hover:[color:var(--hover-color)] group-hover:[filter:var(--hover-glow)] transition-all duration-300">
+                    {getIconForFeature(feature.title, index, primaryColor)}
+                  </div>
                 </div>
               </div>
             </div>
@@ -241,59 +249,24 @@ export function GridPattern({ width, height, x, y, squares, primaryColor = "#8b5
   );
 }
 
-function getIconByIndex(index: number, primaryColor: string) {
-  const big = 200;
-  
-  // Convert hex to rgba for the glow effect
-  const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
-  
-  const hoverColor = `${primaryColor}d9`; // 85% opacity
-  const hoverGlow = hexToRgba(primaryColor, 0.35);
-  
-  const iconStyle = {
-    color: 'rgba(255, 255, 255, 0.2)',
-    transition: 'all 0.3s',
-  };
-  
-  const IconWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div 
-      className="transition-all duration-300"
-      style={iconStyle}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.color = hoverColor;
-        e.currentTarget.style.filter = `drop-shadow(0 0 28px ${hoverGlow})`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.color = iconStyle.color;
-        e.currentTarget.style.filter = 'none';
-      }}
-    >
-      {children}
-    </div>
-  );
-  
+function getIconByIndexRaw(index: number, size: number) {
   switch (index % 8) {
     case 0:
-      return <IconWrapper><FaCalendarAlt size={big} /></IconWrapper>;
+      return <FaCalendarAlt size={size} />;
     case 1:
-      return <IconWrapper><FaCalendarCheck size={big} /></IconWrapper>;
+      return <FaCalendarCheck size={size} />;
     case 2:
-      return <IconWrapper><FaBell size={big} /></IconWrapper>;
+      return <FaBell size={size} />;
     case 3:
-      return <IconWrapper><FaClock size={big} /></IconWrapper>;
+      return <FaClock size={size} />;
     case 4:
-      return <IconWrapper><FaSyncAlt size={big} /></IconWrapper>;
+      return <FaSyncAlt size={size} />;
     case 5:
-      return <IconWrapper><FaMobileAlt size={big} /></IconWrapper>;
+      return <FaMobileAlt size={size} />;
     case 6:
-      return <IconWrapper><FaShieldAlt size={big} /></IconWrapper>;
+      return <FaShieldAlt size={size} />;
     default:
-      return <IconWrapper><FaRegClock size={big} /></IconWrapper>;
+      return <FaRegClock size={size} />;
   }
 }
 
@@ -301,75 +274,19 @@ function getIconForFeature(title: string, index: number, primaryColor: string) {
   const normalized = title.toLowerCase();
   const big = 200;
 
-  // Convert hex to rgba for the glow effect
-  const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
-  
-  const hoverColor = `${primaryColor}d9`; // 85% opacity
-  const hoverGlow = hexToRgba(primaryColor, 0.35);
-  
-  const iconStyle = {
-    color: 'rgba(255, 255, 255, 0.2)',
-    transition: 'all 0.3s',
-  };
-  
-  const IconWrapper = ({ children }: { children: React.ReactNode }) => {
-    const divRef = React.useRef<HTMLDivElement>(null);
-    
-    React.useEffect(() => {
-      const div = divRef.current;
-      if (!div) return;
-      
-      const parent = div.closest('.group');
-      if (!parent) return;
-      
-      const handleMouseEnter = () => {
-        div.style.color = hoverColor;
-        div.style.filter = `drop-shadow(0 0 28px ${hoverGlow})`;
-      };
-      
-      const handleMouseLeave = () => {
-        div.style.color = iconStyle.color;
-        div.style.filter = 'none';
-      };
-      
-      parent.addEventListener('mouseenter', handleMouseEnter);
-      parent.addEventListener('mouseleave', handleMouseLeave);
-      
-      return () => {
-        parent.removeEventListener('mouseenter', handleMouseEnter);
-        parent.removeEventListener('mouseleave', handleMouseLeave);
-      };
-    }, []);
-    
-    return (
-      <div 
-        ref={divRef}
-        className="transition-all duration-300"
-        style={iconStyle}
-      >
-        {children}
-      </div>
-    );
-  };
-
   if (normalized.includes("instant confirmation")) {
-    return <IconWrapper><FaBolt size={big} /></IconWrapper>;
+    return <FaBolt size={big} />;
   }
   if (normalized.includes("automatic reminders")) {
-    return <IconWrapper><FaCalendarDay size={big} /></IconWrapper>;
+    return <FaCalendarDay size={big} />;
   }
   if (normalized.includes("flexible time slots")) {
-    return <IconWrapper><FaArrowsAltH size={big} /></IconWrapper>;
+    return <FaArrowsAltH size={big} />;
   }
   if (normalized.includes("24/7 availability")) {
-    return <IconWrapper><FaRegClock size={big} /></IconWrapper>;
+    return <FaRegClock size={big} />;
   }
 
   // fallback to index-based icon for others
-  return getIconByIndex(index, primaryColor);
+  return getIconByIndexRaw(index, big);
 }
