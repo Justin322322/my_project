@@ -187,15 +187,24 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
-  
+
   /* Hide scrollbar for Chrome, Safari and Opera */
   ::-webkit-scrollbar {
     display: none;
   }
-  
+
   /* Hide scrollbar for IE, Edge and Firefox */
   html {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+}
+
+/* CMS Dynamic Fonts */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading, var(--font-sans));
+}
+
+body {
+  font-family: var(--font-body, var(--font-sans));
 }

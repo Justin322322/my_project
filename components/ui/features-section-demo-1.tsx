@@ -2,11 +2,22 @@ import { useId, type SVGProps } from "react";
 import { FaCalendarAlt, FaCalendarCheck, FaBell, FaClock, FaSyncAlt, FaMobileAlt, FaShieldAlt, FaRegClock, FaBolt, FaArrowsAltH, FaCalendarDay } from "react-icons/fa";
 import InView from "@/components/ui/in-view";
 
-export default function FeaturesSectionDemo() {
+interface FeatureCard {
+  title: string;
+  description: string;
+}
+
+interface FeaturesSectionDemoProps {
+  cards?: FeatureCard[];
+  isEditable?: boolean;
+  onEdit?: (field: string, value: string) => void;
+}
+
+export default function FeaturesSectionDemo({ cards = grid, isEditable, onEdit }: FeaturesSectionDemoProps) {
   return (
     <div className="py-0">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 w-full">
-        {grid.map((feature, index) => (
+        {cards.map((feature, index) => (
           <InView
             key={feature.title}
             delayMs={index * 100}
@@ -27,10 +38,28 @@ export default function FeaturesSectionDemo() {
                 </svg>
               </div>
               <Grid size={20} />
-              <p className="text-xl md:text-2xl font-bold text-neutral-800 dark:text-white relative z-20 mb-4 transition-colors duration-300 group-hover:text-primary">
+              <p 
+                className={`text-xl md:text-2xl font-bold text-neutral-800 dark:text-white relative z-20 mb-4 transition-colors duration-300 group-hover:text-primary ${isEditable ? 'cursor-text hover:ring-2 hover:ring-primary hover:ring-offset-2 hover:ring-offset-neutral-900 p-1' : ''}`}
+                contentEditable={isEditable}
+                suppressContentEditableWarning
+                onBlur={(e) => {
+                  if (isEditable && onEdit) {
+                    onEdit(`features.cards.${index}.title`, e.currentTarget.textContent || '');
+                  }
+                }}
+              >
                 {feature.title}
               </p>
-              <p className="text-neutral-600 dark:text-neutral-400 text-base font-normal relative z-20 flex-grow transition-colors duration-300 group-hover:text-neutral-800 dark:group-hover:text-neutral-200">
+              <p 
+                className={`text-neutral-600 dark:text-neutral-400 text-base font-normal relative z-20 flex-grow transition-colors duration-300 group-hover:text-neutral-800 dark:group-hover:text-neutral-200 ${isEditable ? 'cursor-text hover:ring-2 hover:ring-primary hover:ring-offset-2 hover:ring-offset-neutral-900 p-1' : ''}`}
+                contentEditable={isEditable}
+                suppressContentEditableWarning
+                onBlur={(e) => {
+                  if (isEditable && onEdit) {
+                    onEdit(`features.cards.${index}.description`, e.currentTarget.textContent || '');
+                  }
+                }}
+              >
                 {feature.description}
               </p>
 
