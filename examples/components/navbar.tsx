@@ -17,12 +17,9 @@ export function Navbar({ onBookClick }: NavbarProps) {
     const controlNavbar = () => {
       const currentScrollY = window.scrollY;
 
-      // Show navbar when scrolling up or at the top
       if (currentScrollY < lastScrollY || currentScrollY < 10) {
         setIsVisible(true);
-      } 
-      // Hide navbar when scrolling down and past threshold
-      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsVisible(false);
       }
 
@@ -30,10 +27,7 @@ export function Navbar({ onBookClick }: NavbarProps) {
     };
 
     window.addEventListener("scroll", controlNavbar);
-
-    return () => {
-      window.removeEventListener("scroll", controlNavbar);
-    };
+    return () => window.removeEventListener("scroll", controlNavbar);
   }, [lastScrollY]);
 
   return (
@@ -60,3 +54,5 @@ export function Navbar({ onBookClick }: NavbarProps) {
     </header>
   );
 }
+
+

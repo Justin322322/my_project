@@ -84,7 +84,7 @@ export default function FeaturesSectionDemo({ cards = grid, isEditable, onEdit, 
                   } as React.CSSProperties}
                 >
                   <div className="group-hover:[color:var(--hover-color)] group-hover:[filter:var(--hover-glow)] transition-all duration-300">
-                    {getIconForFeature(feature.title, index, primaryColor)}
+                    {getIconForFeature(feature.title, index)}
                   </div>
                 </div>
               </div>
@@ -270,7 +270,7 @@ function getIconByIndexRaw(index: number, size: number) {
   }
 }
 
-function getIconForFeature(title: string, index: number, primaryColor: string) {
+function getIconForFeature(title: string, index: number) {
   const normalized = title.toLowerCase();
   const big = 200;
 
